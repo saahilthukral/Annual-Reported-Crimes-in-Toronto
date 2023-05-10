@@ -1,3 +1,5 @@
+![R](https://img.shields.io/badge/R-Used-blue)
+
 # Toronto Crime Analysis
 
 This project analyzes the reported crimes in Toronto from the years 2014 to 2019. The dataset used in this analysis is retrieved from the City of Toronto Open Dataset, specifically from the [Police Annual Statistical Report - Reported Crimes](https://open.toronto.ca/dataset/police-annual-statistical-report-reported-crimes/) dataset, last refreshed on November 18, 2022. The dataset provides a comprehensive overview of reported crimes, including details such as year, division, crime category, subtype, count, and count cleared.
