@@ -1,0 +1,270 @@
+---
+title: "STAA57 Case Study Report - Determinants of the reported crimes in Toronto"
+author: '123'
+date: "3/29/2023"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+
+```{r, include=FALSE}
+library(tidyverse)
+data <- read_csv("reportedcrime.csv")
+data
+```
+
+
+# Summary of Data
+
+```{r, echo=FALSE}
+glimpse(data)
+```
+
+The dataset is retrieved from the City of Toronto Open Dataset from <https://open.toronto.ca/dataset/police-annual-statistical-report-reported-crimes/> that was last refreshed in November 18, 2022 regarding comprehensive overview of reported crimes from the year 2014-2019 in Toronto. This dataset has a total of 2701 reported entries with 8 variables that are important to analyse the different types of crimes based on year, division and subtype.
+
+Here is a breakdown of what each variable represents:
+
+1.  X_id = (int) Unique row identifier for Open Data database
+
+2.  ObjectId = (int) Unique identifier from the source system
+
+3.  ReportedYear = (int) Year crime was reported
+
+4.  GeoDivision = (chr) Geographic division where crime took place
+
+5.  Category = (chr) Crime category
+
+6.  Subtype = (chr) Crime category subtype
+
+7.  Count = (int) Total number of crimes
+
+8.  CountCleared = (int) Total number of crimes identified as cleared
+
+
+## Background about the Data 
+
+The Annual Statistical Report (ASR) of the Toronto Police Service provides a detailed overview of various police-related statistics such as reported crimes, victims, personnel, budget, and other administrative information. The dataset contains all reported crime offenses between 2014 and 2019, aggregated by division and reported date, including crimes that were later deemed unfounded, occurred outside Toronto's limits, or had no verified location.
+
+The Toronto Police Service has cooperated with the Municipal Freedom of Information and Protection of Privacy Act to protect the privacy of people who associated with the reported occurrences in order to make sure that no personal information pertaining to any of the persons involved will be disclosed. The information has been divided into groups according to year, category, subtype, and region.
+
+If an occurrence involves multiple offense types, it will be included in multiple categories. The count presented *does not* indicate the number of distinct incidents.
+
+
+## Data Collection
+
+The Toronto Police Service usually gathers information through a variety of tools, such as incident reports, service requests, officer notes, and other police-related paperwork. First, the data is used to produce reports and statistics and then it is entered to a central database to make the Annual Statistical Report. Police officers manually enter data or use automated methods to do so depending on the type of information. Toronto Police Service also collaborates with other agencies such as hospitals and community organizations to collect data.
+
+
+```{r, echo=FALSE}
+data %>% select(Count_, CountCleared) %>% summary(data)
+```
+
+The mean value of Count and CountCleared is 374 and 161.3 respectively, which is higher than the median, indicating that there are some very high values in the both of them that are increasing the mean. The distribution of Count and CountCleared appears to be heavily skewed to the right, as the maximum value is much larger than the mean and the median, suggesting that there are many outliers in the data.
+
+
+## Overall Research Question:
+How do the reported crime rates and cleared crimes vary across different GeoDivisions in Toronto every year?
+
+
+# Analysis
+```{r, echo=FALSE}
+data1 = data %>% group_by(ReportedYear,Category) %>% summarise(Count_ = sum(Count_), CountCleared = sum(CountCleared)) %>% arrange(desc(Count_))
+head(data1,8)
+```
+
+**data1** suggest that Crime Against property is the highest category on committed crimes and has been consistently increasing from 2014 to 2019. This simple data already indicates that Toronto Police should address this as a major concern and should implement preventive measures to keep the community safe.
+
+```{r, echo=FALSE}
+data2 = data %>% group_by(ReportedYear) %>% summarise(Count_ = sum(Count_), CountCleared = sum(CountCleared)) %>% arrange(desc(Count_))
+data2
+```
+
+**data2** table was created to let us analyse that the highest committed crime was in 2019 with a total of 144507 and the lowest in 2014 with 113506.
+
+```{r, echo=FALSE}
+data3 = data %>% filter(GeoDivision == "D51") %>% group_by(ReportedYear) %>% summarise(Count_ = sum(Count_), CountCleared = sum(CountCleared))
+data3.pivoted = data3 %>% pivot_longer(Count_:CountCleared, names_to="CountType", values_to = "Totals", values_drop_na = T)
+head(data3.pivoted)
+```
+
+We manipulated **data3** by pivoting it longer to change the structure to make data3.pivoted and focused on GeoDivision D51, allowing us to create a grouped bar chart showing trends of every year.
+
+```{r, echo=FALSE}
+ data %>% group_by(ReportedYear, Category) %>% summarise(Avg_Count = mean(Count_), Avg_CountCleared = mean(CountCleared)) %>% arrange(desc(Avg_Count))
+```
+The table shows data on average reported incidents of crimes against property and other crimes for several years. Average count of reported crimes was highest in 2019 for Crimes Against Property among all crimes, whereas average count of reported crimes was lowest in 2021 for Other Federal Statute Violations among all crimes. 
+
+
+\pagebreak
+# Graphical Representations and Plots
+```{r, , echo=FALSE}
+a1 = ggplot(data, aes(x=Category, y = Count_)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 0.8))
+a1 + ylim(0,2200)
+```
+Based on the figure above, we can see that Crime Against Property shows the highest outlier compared to other categories. Overall the extreme outliers across the data (as shown in the boxplot causes the normality of the data to be questioned, indicating extreme skewness to right. Therefore it would be recommended to use techniques such as bootstrapping, as it does not depend on the distribution of the data.
+
+
+```{r, echo=FALSE}
+ggplot(data2, aes(x = ReportedYear, y = Count_)) + geom_line() + labs(x = "Year", y = "Crime Count")
+```
+
+The line graph above shows the committed crime trend along the year from 2014 to 2021 where there is a significant increase in the number of crimes from 2014 to 2019. The rate of committed crimes has also increased from 2014 to 2018 but had a steep decrease in crimes from 2019 to 2020 resulting in crimes lower than that of 2016. This might be due to Toronto Police addressing the concerns of the high count of committed crimes and shows a significant improvement in the city's safety. Nevertheless, the overall trend is positive where the crime rates gets reduced overtime although the number of crimes did grow slightly by a few thousands from 2020-2021 during the pandemic. This analysis is really valuable because it shows that over the years, there is a significant improvement in making the City of Toronto safer.
+
+```{r, echo=FALSE}
+ggplot(data1, aes(x = ReportedYear, y = Count_)) + geom_line() + facet_wrap(~Category) + labs(x = "Year", y = "Crime Count")
+```
+
+The graph above depicts crime trends from 2014 to 2021 by Crime Categories. The Controlled Drugs and Substance Act exhibits a steady linear decline in the number of crimes. Conversely, the Crimes Against Property shows an increase at a steeper rate, peaking at 2019 and dropped significantly in 2020. The remaining categories such as Crimes Against Person, Criminal Code Traffic, Other Criminal Code Violations and Other Federal Statute Violations exhibit stable horizontal trend line with slight fluctuations. Overall Federal Statute Violations has the lowest impact and Crimes Against Property having the biggest impact in the number of crimes committed.
+
+```{r, echo=FALSE}
+ggplot(data, aes(x = Category)) + geom_bar() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+The bar chart above illustrates committed crimes by Crime Categories. The data highlights that Crimes Against Property has the biggest impact on committed crimes, followed by Crime Against Person and Other Criminal Code Violations. This indicates that property crimes are the most pervasive form of criminal activity in Toronto. When considering the data across multiple years, this trend remains consistent and these findings underscore Toronto Police to prioritize prevention strategies aimed at reducing Crimes Against Property to improve the city's safety.
+
+```{r, echo=FALSE}
+data_bar = data %>% group_by(GeoDivision, Category) %>% summarise(Count_ = sum(Count_), CountCleared = sum(CountCleared))
+ggplot(data_bar, aes(x = GeoDivision, y = Count_, fill = Category)) + geom_bar(position = "stack", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+The stacked bar chart above provides insight to the committed crimes across different GeoDivision and Crime Categories in Toronto. The data shows that the highest committed crime is located at GeoDivision D51, with Crimes Against Property being the dominant category. Conversely, NSA is revealed to have the lowest number of committed crimes amongst all GeoDivision. The Toronto Police can use this information to target specific areas and provide more resources and protections to address the high incidence of committed crimes especially Crime Against Property in GeoDivision D51.
+
+```{r, echo=FALSE}
+ggplot(data4.pivoted, aes(x = ReportedYear, y = Totals, fill = CountType)) + geom_bar(position = "dodge", stat = "identity") 
+```
+
+The graph above illustrates a detailed analysis of a grouped bar chart based on the number of committed crimes and cleared crimes along the year in GeoDivision D51, the most dangerous GeoDivision in Toronto. There is a steady increase in the counts of crimes from 2014 and peaking in 2018 where the overall trend shows a decrease in crime from 2018 to 2021. Although the number of crimes has been fluctuating, the CountCleared has been at a relatively same level throughout the year, indicating that the ratio between CountCleared and committed crimes is becoming larger.
+
+## Confidence intervals using t.test and prop.test:
+
+
+Finding the confidence interval of Count_ (which is what is we are considering our Y variable)
+
+```{r, echo=FALSE}
+t.test(data$Count_)
+```
+The code has been run and it can be seen that the range of the mean value is between 349.0564 and 398.9095, with the mean of the data being 373.983
+
+However as seen from the boxplots of the data, the normality of the data appears to be questionable, therefore a bootstrap confidence interval is being done.
+
+```{r, echo=FALSE}
+boot_data = sample(data$Count_,size = nrow(data))
+boot_function=function(){
+  
+  #boot_data = data %>% slice_sample(n = nrow(data),replace = T) 
+  
+  #boot_mean = boot_data %>% summarize(cal.s = mean(Count_,na.rm=T))
+  
+ # return(boot_mean[1,1])   #since summary was created as a dataset, extracting the value out of it
+  #boot_s = sample(obs.sam, size=10, replace=TRUE)
+  #return(mean(boot_data,na.rm=T))
+  boot_s = sample(boot_data,size = nrow(data),replace = TRUE)
+  return(mean(boot_s))
+}
+
+quantile(replicate(1000,boot_function()), c(0.025,0.975))
+
+
+# Comparing the output with the output from t.test()
+t.test(data$Count_, conf.level = 0.95)
+
+```
+The code has been run and it can be seen that the range of the mean value is between 348.4253 and 397.7442, which is quite similar to the confidence interval found using the t-test. However, since the data does not appear to be normal, a bootstrap test is a much better test, as it works, irrespective of the distribution of the data, as opposed to the t-test, which works for normally distributed data.
+
+### 95% confidence interval of the number of crimes that have been cleared.
+
+```{r, echo=FALSE}
+t.test(data$CountCleared)
+```
+
+
+# Proportion test
+```{r}
+d2.a = data %>% summarise(No_Count = sum(Count_), No_CountCleared = sum(CountCleared) )
+d2.a1 = d2.a %>% summarise(Total = d2.a$No_Count + d2.a$No_CountCleared)
+prop.test(d2.a$No_Count,d2.a1$Total, p = 0.5)
+```
+Since the p-value < 2.2e-16, we fail to reject null and conclude that the true proportion of the number of reported crimes to  the total number of reports is not equal to 0.5. 
+
+
+## Hypothesis Testing
+
+Testing whether or not the average number of crimes is greater than 300
+
+```{r, echo=FALSE}
+t.test(data$Count_, mu = 300, alternative = "greater", conf.level = 0.95)
+```
+Looking at the p-value which much smaller than $\alpha = 0.05$, we can reject the null hypothesis and therefore come to the conclusion that the mean count of cases across the years is greater than 300.
+
+### Bootstrapping: alternative to a t-test
+
+```{r, echo=FALSE}
+
+mu_H0 = 300
+
+x=data$Count_
+obs_mean = mean(x)
+new_x = x - obs_mean + mu_H0
+boot_function= function(){
+s= sample(new_x, size=300, replace=T)
+return(mean(s))
+}
+boot_new_x_bar = replicate(1000, boot_function())
+
+mean(boot_new_x_bar<obs_mean)
+```
+The results are being displayed in comparison to the t-test, the p-value is much higher than $\alpha = 0.05$ indicating the null hypothesis is not rejected and there is a possibility that the mean value is 300. 
+
+
+# Regression Models
+
+## Total number of crimes(Count_) as dependent variable:
+```{r, echo=FALSE}
+model <- lm(Count_ ~ ReportedYear + GeoDivision + Category + Subtype + CountCleared, data = data)
+summary(model)
+```
+
+### Important inferences about the model summary: 
+
+* $R^2=0.8979$: $89.79\%$ variation in *Count_* can be explained by the model.
+
+* The coefficient for *ReportedYear* is $17.65$, which indicates that, on average, 
+the number of reported crimes in a particular category and geographic division 
+increased by $17.65$ per year. 
+
+* There are several variables in the model that are **not significant** at the $\alpha =0.05$, including:
+    * GeoDivision variables D12, D13, D31, D33, D41, D42, D43: These variables are not significant at the $0.05$ level which indicates that they do not provide enough explanatory power to the model.
+    * CategoryCriminal Code Traffic: p-value = $0.116114>0.05$. Thus, variable is not significant at the $0.05$ level, indicating that it does not provide enough explanatory power to the model.
+    * SubtypeAuto Theft: p-value = $0.66693>0.05$. Hence, variable is not significant at the $0.05$ level, indicating that this specific subtype does not provide enough explanatory power to the model.
+
+
+# Cross validation
+
+Splitting dataset into two parts: real and test, with a proportion choice of $\%60-\%40$. 
+```{r, echo=FALSE}
+set.seed(123)
+data = data %>% mutate(group_ind = sample(c("train", "test"),
+                                                      size=nrow(data),
+                                                      prob=c(0.6, 0.4),
+                                                      replace = T))
+```
+
+Conducting the **Cross validation** by checking external validity:
+```{r, echo=FALSE}
+#MSE for training dataset
+m=lm(Count_ ~ GeoDivision + Category + Subtype + CountCleared, data = data %>% filter(group_ind=="train"))
+y.hat=predict(m)
+
+mean((data$Count_[data$group_ind=="train"] - y.hat)^2)
+```
+```{r, echo=FALSE}
+#MSE for testing dataset
+y.hat=predict(m, newdata = data %>% filter(group_ind=="test"))
+
+mean((data$Count_[data$group_ind=="test"] - y.hat)^2)
+```
+
+
+
